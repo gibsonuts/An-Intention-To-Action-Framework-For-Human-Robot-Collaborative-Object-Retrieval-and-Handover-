@@ -1,0 +1,13 @@
+{
+  "reference_mode": "rgb",
+  "asset_name": "screw_template",
+  "camera": "arm",
+  "image_shape_hw3": [
+    480,
+    640,
+    3
+  ],
+  "mask_pixels": 2586,
+  "mask_coverage": 0.00841796875,
+  "similarity_depth_scale_mm": 100.0
+}

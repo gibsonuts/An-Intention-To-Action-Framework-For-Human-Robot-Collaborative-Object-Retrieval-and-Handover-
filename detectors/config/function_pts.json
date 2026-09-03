@@ -1,0 +1,80 @@
+{
+  "type": "function",
+  "name": "object_points",
+  "description": "Detect objects in an image and return their bounding boxes and labels that match a user query.",
+  "strict": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The user query you answered."
+      },
+      "image_size": {
+        "type": "object",
+        "description": "The width and height of the analyzed image in pixels.",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "description": "Width of the image in pixels."
+          },
+          "height": {
+            "type": "integer",
+            "description": "Height of the image in pixels."
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "additionalProperties": false
+      },
+      "points": {
+        "type": "array",
+        "description": "Zero or more points that match the query.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string",
+              "description": "Short name of the object."
+            },
+            "confidence": {
+              "type": "number",
+              "description": "Confidence score for the detection (between 0 and 1).",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "xy": {
+              "type": "array",
+              "description": "Points formatted as [x, y] in pixels.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "required": [
+            "label",
+            "confidence",
+            "xy"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "reasoning": {
+          "type": "string",
+          "description": "Show the reasoning"
+      }
+  
+    },
+    "required": [
+      "query",
+      "image_size",
+      "points",
+      "reasoning"
+    ],
+    "additionalProperties": false
+  }
+}

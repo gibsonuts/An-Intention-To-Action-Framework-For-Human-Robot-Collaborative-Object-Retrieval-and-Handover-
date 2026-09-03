@@ -1,0 +1,315 @@
+# Screw Detection and Installation Configuration
+
+# start_joint: [1.7356319427490234, -1.549859670256712, 1.450646702443258, 0.09634308397259517, 1.7428714036941528, 3.140535354614258]
+# ready_joint: [0.8815209269523621, -1.5449069061181326, 2.046753708516256, -0.5024855893901368, 0.8861804604530334, 3.142031192779541]
+# grasp_joint: [3.0982298851013184, -1.8002716503539027, 1.4467681089984339, -1.836355825463766, -1.573658291493551, -0.03175574937929326]
+# screw_pickup_joint:  [3.0797462463378906, -1.3587077421000977, 1.5531681219684046, -0.1888926786235352, 1.4703335762023926, 3.1401350498199463]
+
+# Screw and Gripper Tool
+start_joint: [1.5877395868301392, -1.3417526644519349, 1.8542173544513147, -0.5141464036754151, -1.0817878882037562, -1.5669401327716272]
+screw_pickup_joint: [2.942140579223633, -1.348836289053299, 1.9736841360675257, -0.6172711414149781, 0.39791131019592285, -1.5790498892413538]
+screw_target_joint: [1.5877395868301392, -1.3417526644519349, 1.8542173544513147, -0.5141464036754151, -1.0817878882037562, -1.5669401327716272]
+grasp_joint: [2.4525110721588135, -1.822702547112936, 2.2227166334735315, -0.5220330518535157, 1.5929162502288818, -3.126277510319845]
+manual_gripper_joint: [1.2860361337661743, -1.1003902715495606, 1.5210054556476038, -3.0197164020934046, -1.3291061560260218, -0.14848596254457647]
+manual_drill_joint: [1.4384312629699707, -1.0892277222922822, 1.360340420399801, -0.27293534696612554, -1.149729077016012, -1.5660527388202112]
+
+# SAM3 inference backend. A YAML key is supported for convenience; environment
+# variables are safer when this repository may be committed or shared.
+sam3:
+  backend: roboflow  # roboflow | local
+  device: local       # used only when backend is local
+  default_conf_threshold: 0.2
+  roboflow:
+    api_key: null
+    api_key_env: "ROBOFLOW_API_KEY"
+    api_url: "https://serverless.roboflow.com/sam3/concept_segment"
+    model_id: "sam3/sam3_final"
+    timeout_s: 60.0
+    jpeg_quality: 95
+
+# Robot motion settings
+motion:
+  default_speed: 0.1
+  screw_length: 0.255  # meters
+  
+  # Approach offsets
+  offsets:
+    initial_approach: 0.20  # meters above target
+    refine_approach: 0.17 #servo mode
+    # refine_approach: 0.1 
+    pickup_clearance: 0.19
+    observation_offset: 0.7
+    target_mark_clearance: 0.16  # added to screw_length
+    refined_target_mark_clearance: 0.13  # added to screw_length for arm-camera target-mark refinement
+
+  # TCP orientation at planned screw and target-mark poses.
+  # The selected signed TCP axis is projected perpendicular to TCP +Z and aimed at base_point.
+  target_orientation:
+    tcp_axis_to_base: "-x"
+    base_point: [0.0, 0.0, 0.0]
+
+  # TCP orientation used only while planning screw pickup poses.
+  # With straight_down enabled, TCP +Z points vertically down and tcp_axis_to_base
+  # is ignored. Disable it to align the selected signed TCP axis toward base_point.
+  pickup_orientation:
+    straight_down: true
+    tcp_axis_to_base: "+y"
+    base_point: [0.0, 0.0, 0.0]
+
+  # Generic gripper pickup poses: TCP +Z points vertically down and the selected
+  # signed TCP axis follows the SAM mask's long direction.
+  gripper_object_pickup_orientation:
+    tcp_z_direction_base: [0.0, 0.0, -1.0]
+    tcp_axis_along_object: "+y"  # +x | -x | +y | -y
+  
+  # Movement constraints
+  constraints:
+    max_z_offset: 0.25  # max upward movement
+    min_distance_threshold: 0.05  # ignore very close targets
+
+  servo:
+    servo_speed: 0.04
+    time: 1.0           # Prcessing time fo each servo command
+    min_step_m: 0.001
+    rotation_step_deg: 15 # max step per iteration in radians (5° default)
+    rot_tolerance_deg: 1 #
+    pos_tolerance_m: 0.002  # meters to target to stop
+    max_time_s: 60.0     # maximum time to attempt servoing
+    steady_tolerance_m: 0.005
+    steady_iters: 5
+    max_missing_detections: 3
+
+# Detection prompts
+prompts:
+#  target_marker: "cross symbol"
+  target_marker: "green point"
+  screw_head: "screw head"
+  screw_stem: "metal rod"
+  screw_box: "white area"
+
+screwpickup_detection:
+  mode: head_and_box  # stem_only | head_only | head_and_stem | head_and_box
+                        # alias supported in code: hand_and_box -> head_and_box
+
+# Generic settings apply to any requested object that does not have a tuned entry
+# below. The requested object name is used directly as the SAM text prompt.
+gripper_pickup_defaults:
+  allow_unconfigured: true
+  confidence: 0.40
+  pickup_clearance: 0.15
+  orientation_align: long
+  camera: gripper
+
+# Optional tuned entries provide aliases, different SAM prompts, or object-specific
+# motion settings. They are overrides, not an allow-list.
+gripper_pickup_objects:
+  - name: screw
+    prompt: "metal rod"
+    aliases: ["a screw", "grab a screw", "get a screw", "fetch a screw", "pick up a screw", "bring me a screw", "hand me a screw"]
+    confidence: 0.40
+    pickup_clearance: 0.15
+    orientation_align: long
+    camera: gripper
+  - name: blue allen key set
+    prompt: "blue tool"
+    aliases: ["allen key set", "hex key set", "blue hex key set"]
+    confidence: 0.40
+    pickup_clearance: 0.15
+    orientation_align: long
+    camera: gripper
+  - name: spanner
+    prompt: "spanner"
+    aliases: ["wrench", "a spanner"]
+    confidence: 0.40
+    pickup_clearance: 0.15
+    orientation_align: long
+    camera: gripper
+# Fixed-camera watcher. Rules may suggest a gripper_pickup_objects name or one
+# of the named actions below.
+vlm_watcher:
+  enabled: false
+  api_url: "http://127.0.0.1:1234/v1/chat/completions"
+  interval_sec: 2.0
+  suggestion_cooldown_sec: 30.0
+  show_debug_window: false
+  debug_show_window: true
+  debug_timeout_sec: 60.0
+  request_timeout_sec: 30.0
+  temperature: 0.2
+  max_tokens: -1
+  actions:
+    screw_installation:
+      tool: "screw_installation_request"
+      requirement: "screw"
+      spoken_name: "screw installation"
+      auto_execute: true
+  rules:
+    - if: "a person is holding a power drill"
+      suggest: "screw_installation"
+
+# LLM query settings (Responses API + vision selector prompt)
+llm:
+  openai_query:
+    default_model: gpt-5.2 #gpt-5.2
+    fallback_models:
+      - gpt-5.2
+      - gpt-4.1
+      - gpt-4o
+      - gpt-4.1-mini
+    reencode_rgb: true
+    jpeg_quality: 95
+    # Passed directly into openai.responses.create(...)
+    responses_create:
+      tools: []
+      tool_choice: null
+
+  vision_selector:
+    contour_type: overlap  # overlap | heads_only | both | auto
+    include_unlabeled_context_image: true
+    prompt_template: |
+      You are selecting one labeled contour for a robot pickup request.
+      User request: {request}
+      The image contains labeled contours. Select exactly ONE contour label.
+      Selectable labels: {selectable_labels_csv}
+      Only choose labels that start with '{selectable_prefix}'. Do not choose other labels.
+      Make sure there is a screw inside the selected contour box.
+      Choose the ONE contour that best corresponds to the requested screw location/type based on nearby contour shape/context.
+      If uncertain, choose the best available candidate instead of refusing.
+      Return JSON only in this format: {json_example}
+    query:
+      mime_type: image/jpeg
+      # Optional per-selector fallback override (omit or leave [] to use llm.openai_query.fallback_models)
+      fallback_models: []
+      # Passed directly into openai.responses.create(...) for this selector query
+      responses_create:
+        tools: []
+        tool_choice: null
+
+# Detection confidence thresholds
+confidence_arm:
+  screw_head: 0.5
+  screw_stem: 0.4 #0.2
+  screw_box: 0.2
+  target_marker: 0.1
+
+confidence_fixed:
+  screw_head: 0.2
+  screw_stem: 0.05
+  screw_box: 0.2
+  target_marker: 0.05
+
+
+# Filtering parameters
+filtering:
+  target_marker:
+    # SAM may return several slightly shifted masks for the same physical mark.
+    dedupe_iou: 0.5
+  stem:
+    min_area_px: 500
+    min_aspect_ratio: 3.5  # height/width for vertical check
+    max_distance_to_tcp_px: 150.0 #max distance from TCP in pixels
+  
+  attachment_check:
+    horizontal_tolerance_px: 25  # TCP x-coordinate tolerance
+    require_below_tcp: true  # stem centroid must be below TCP
+
+# Hardware settings
+hardware:
+  # The stop input on this installation is active-low: false means pressed.
+  stop_io:
+    active_high: false
+
+  # Timing parameters
+  timing:
+    urp_load_delay: 0.5 # seconds between loading a URP and pressing play
+    urp_start_timeout: 10.0
+    urp_finish_timeout: 300.0
+    urp_poll_interval: 0.25
+    post_pickup_wait: 2.0
+    screwdriver_poll_interval: 0.5
+    trigger_poll_interval: 0.1
+    manual_override_hold_s: 3.0
+    manual_program_start_delay: 0.5
+    manual_stop_timeout: 30.0
+    system_reset_timeout_s: 60.0
+    reset_motion_ready_timeout_s: 15.0
+    reset_motion_retry_interval_s: 0.5
+    dashboard_connect_delay: 0.1
+    rtde_to_dashboard_delay: 1.0
+    dashboard_to_rtde_delay: 1.0
+
+# Post-pickup validation using a saved mask asset ROI + SAM contour matching
+pickup_verification:
+  enabled: false
+  mask_asset_name: "screw_template"
+  retry_pickup_attempts: 3
+  retry_pickup_nudge_xy_m: 0.005
+  retry_pickup_nudge_z_m: -0.01
+  retry_pickup_nudge_speed: 0.1
+  # Arm-camera pickup verification now uses SAM contour matching inside the saved mask ROI.
+  arm_template_sam_prompt: "metal rod"
+  arm_template_sam_confidence: 0.40
+  arm_contour_match_attempts: 5
+  arm_template_roi_padding_px: 20
+  arm_template_min_contour_area_px: 120
+  arm_contour_match_threshold: 150
+  arm_contour_area_ratio_min: 0.45
+  arm_contour_area_ratio_max: 2.20
+  arm_contour_length_ratio_min: 0.60
+  arm_contour_length_ratio_max: 1.70
+  arm_contour_overlap_ratio_min: 0.10
+  # Fixed-camera screw-state SAM crop around projected end-effector tip.
+  # Crop is defined relative to the tip pixel; top edge is clamped to never be above the tip.
+  fixed_crop_box:
+    width_px: 320
+    height_px: 120
+    x_offset_px: -160   # centers crop on tip in x
+    y_offset_px: 0      # top edge at/under tip; negative values are clamped to tip
+  fixed_sam_stem_min_contour_length_px: 100
+  fixed_sam_stem_max_contour_length_px: 800
+  fixed_sam_attach_distance_threshold_px: 60
+  refine_roi_half_size_px: 75
+  refine_max_pick_distance_px: 500
+  enable_local_refine: true
+
+# URP program names
+programs:
+  pickup: "screw_pickup.urp"
+  gripper_pickup: "gripper_pickup.urp"
+  admittance: "admittance_control_4d.urp"
+  drill_admittance: "admittance_control_4d.urp"
+  gripper_admittance: "admittance_control_4d.urp"
+
+# Debug settings
+debug:
+  enabled: false
+  output_dir: "data/image_samples"
+  images:
+    all_detections: "sam3_all_detections.png"
+    overlap_heads: "sam3_overlap_heads.png"
+    target_marks: "sam3_target_marks.png"
+    generic_detect: "sam3_generic_detect.png"
+  
+  # Color coding for visualization (BGR)
+  colors:
+    screw_head: [0, 255, 0]      # Green
+    screw_stem: [0, 165, 255]    # Orange
+    screw_box: [255, 0, 0]        # Blue
+    target_marker: [0, 0, 255]     # Red
+
+# Feature flags
+features:
+  enable_voice: true
+  refine_positioning_screw: true  # use arm camera for screw refinement
+  refine_positioning_target: true # use arm camera for target mark refinement
+  
+
+
+# Voice messages`
+voice:
+  screw_not_attached: "Screw not attached properly. Fix and press trigger."
+  manual_mode_help: "Guide the drill to the screw. Press the trigger to run the screwdriver."
+  atuo_mode_help: "Auto installation starting."
+  install_start: "Screw installation starting now. Please move away from the robot."
+  screwdriver_error: "Screwdriver operation failed. Please check the screw."
+  screwdriver_success: "Screw installation complated."

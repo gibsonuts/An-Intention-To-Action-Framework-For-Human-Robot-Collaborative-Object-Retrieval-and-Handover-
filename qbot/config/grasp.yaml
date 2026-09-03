@@ -1,0 +1,25 @@
+
+scanning:
+  scan_type: xy_arch
+  pitch_min_deg: -20
+  pitch_max_deg: 20
+  max_offset_m: 0.2
+  min_offset_m: -0.0
+  axis: x
+  scan_centre_from_current_z_m: 0.25
+  log_interval_s: 0.6
+
+pointcloud:
+  voxel_downsample_size: 0.007
+  outlier_removal_std: 0.005
+
+ignore_scanning: False
+start_location: [3.100128412246704, -1.8295461140074671, 2.0815275351153772, -2.441829820672506, -1.5737364927874964, -0.032743279133931935] 
+
+bbox:
+  margins_px: 20
+
+grasp:
+  roll_limits_deg: [-110.0, 110.0]
+  pitch_limits_deg: [-90, 45.0]
+  yaw_limits_deg:  [-0, 100]

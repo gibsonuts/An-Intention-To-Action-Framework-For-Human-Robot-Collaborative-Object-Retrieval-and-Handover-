@@ -1,0 +1,260 @@
+realtime_client:
+  api_key: ${OPENAI_API_KEY}
+  model: gpt-realtime
+  voice: alloy #marin
+  ws_url: null                       # null -> default inferred from model
+  tool_choice: auto                  # "auto" or {"type":"tool","name":"..."}
+  # Audio I/O
+  sample_rate: 24000
+  chunk_ms: 200
+  out_block_ms: 100
+  fade_ms: 5
+  mic_latency: low                   # low|medium|high (sounddevice latency hint)
+  # Echo / ducking behaviour
+  echo_handling: half_duplex         # off | half_duplex | attenuate
+  echo_guard_ms: 200                 # keep mic gated after last output enqueue
+  attenuation_db: 18                 # only used for 'attenuate'
+  # Debug / dumps
+  debug_audio_in: false
+  debug_audio_out: false
+  dump_mic_wav: null                 # e.g., debug_mic_input.wav
+  dump_out_wav: null                 # e.g., debug_model_output.wav
+ 
+  show_transcript: true          # true/false (bool). If bool=true → defaults to "final"
+  transcript_mode: "final"       # "final" | "stream" | "both"
+  transcript_file: data/logs/transcript.txt          # optional path to append all transcripts, e.g. "logs/transcript.txt"
+
+  enable_websearch: true #enable web search
+
+speech_pipeline:
+  openai_api_key: ${OPENAI_API_KEY}
+  llm_provider: openai #lmstudio             # openai | lmstudio
+  # llm_base_url: http://192.168.107:1234/v1
+  llm_base_url: https://api.openai.com/v1
+  llm_api_key: ${OPENAI_API_KEY}
+  llm_model: gpt-5.4
+  llm_temperature: 0.6
+  stt_base_url: https://api.openai.com/v1
+  stt_model: whisper-1
+  stt_language: en
+  tts_base_url: https://api.openai.com/v1
+  tts_model: gpt-4o-mini-tts
+  tts_voice: alloy
+  tts_instructions: "Speak in a natural, friendly Australian English accent. Keep it warm, clear, and conversational without exaggerating the accent."
+  tts_enabled: false
+  tts_response_format: pcm
+  input_sample_rate: 16000
+  tts_sample_rate: 24000
+  input_block_ms: 30
+  input_preroll_ms: 180
+  start_trigger_blocks: 2
+  wake_capture_delay_ms: 120
+  wake_rearm_delay_ms: 350
+  output_block_ms: 40
+  output_prebuffer_ms: 120
+  output_device: null
+  output_latency: high
+  fade_ms: 5
+  min_speech_rms: 0.0086
+  min_speech_seconds: 0.08
+  end_silence_seconds: 0.6
+  max_record_seconds: 12.0
+  sentence_min_chars: 48
+  print_transcript: true
+  transcript_file: data/logs/speech_pipeline_transcript.txt
+  debug_pipeline: true
+  debug_audio_in: true
+  debug_audio_out: true
+  dump_mic_wav: null
+  dump_out_wav: null
+  request_timeout_s: 120.0
+
+speechsdk:
+  # Turn the feature on/off:
+  enable_wake_word: true
+
+  # Best practice: keep secrets in env and reference them here (env expansion supported):
+  subscription_key: ${AZURE_SPEECH_KEY}
+  region: ${AZURE_SPEECH_REGION}
+
+  # Your wake-word model file (you said it's in config/):
+  # keyword_table: config/trigger_words/linux/Hey_Sam.table
+  keyword_table: config/trigger_words/linux/Hey_Mate.table
+  # Optional tunables:
+  idle_timeout_seconds: 500 #20       # go idle after this much user silence
+  rms_voice_threshold: 0.01      # raise to be stricter about what counts as “speech”
+
+
+presets:
+  wake_sound: sounds/ding.wav
+  sleep_sound: sounds/dong.wav
+  fail_sound: sounds/beep.wav
+
+## System instructions the model receives when the session starts
+instructions: |
+  You are a helpful robot assistant that interacts in English only.
+  When in normal mode:
+    - Your main function is to get objects for the user when requested. Announce: "I'm going to get the [item] for you."
+    - Use stop_action to halt any ongoing process. Announce: "I'm stopping now."
+  When in screwing mode:
+    - You are controlling a screw-installation robot called Quendabot."
+    - When the user wants to install a screw, call `screw_installation_request` with requirement."
+    - Do not ask clarifying questions about the item; proceed to  it.
+    - If user wants object, suggest changing the tool and run normal mode.
+  General guidelines:
+    - Don't task back
+    - Be robotic and do whatever the user asks without question.
+    - Do not confirm possession of an item unless explicitly prompted.
+    - Do not ask clarifying questions about the item; do the task
+    - Dont say that you have it unless you a prompted that you have the item. Dont ask about the item just get it
+    - make sure this holds true if you are asked to get another item
+    - If asked to get something else, respond: something creative about being busy getting [current item]." 
+    - Cannot fetch anything new items task if the [completed] tag has not been received
+    - Never fabricate information; only act on provided details.
+    - Always follow these instructions for consistent, reliable, and safe operation.
+    - Dont talk so much , only talk when asked a question
+  Additional Information:
+    - Current location: sydney
+    - You are a robot arm inside the robotics institute lab in university of technology sydney
+    - You are a demo project for the HartCon (Human and robot teaming in Construction Hub)
+
+
+websearch_instructions: |
+    - If the user asks about time-sensitive topics (news, events, restaurants, product availability, prices, regulations, schedules),
+     or if you are uncertain about a fact, call the `web_search` tool with a clear query, then integrate the returned `summary` into your reply. say 'ill look that up for ya, give me a few secs'
+
+reinforced_instructions: |
+  - None
+
+# Tool (function) schemas exposed to the model.
+tools:
+  - type: function
+    name: web_search
+    description: Run a web search when up-to-date information is needed; returns a summary and sources.
+    parameters:
+      type: object
+      properties:
+        query:
+          type: string
+          description: The user’s search query.
+      required: [query]
+
+  - type: function
+    name: get_object
+    description: get an object
+    parameters:
+      type: object
+      properties:
+        description:
+          type: string
+          description: very short 2 word description of the object to get
+      required: [description]
+
+  - type: function
+    name: select_object
+    description: get an object
+    parameters:
+      type: object
+      properties:
+        label:
+          type: string
+          description: label annotated in the image
+        description:
+          type: string
+          description: description of the object to get
+      required: [label,description]
+
+  - type: function
+    name: stop_action
+    description: stop the current action or process
+    parameters:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: reason for stopping the action
+      required: [reason]
+
+  - type: function
+    name: get_all_object_location
+    description: get object based on pixel location(s) of the requested object in the image
+    parameters:
+      type: object
+      description: pixel locations of all objects
+      properties:
+        object_list:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string,  description: a 2 word concise unique label of object  }
+              description: { type: string, description: a brief description about the object.}
+              reason: {type: string, description: how it relates to the prompt and exact location in the image of the object give reasoning for this location }
+              image_size:
+                type: array
+                description: The width and height of the analyzed image in pixels.
+                items:
+                  type: number   
+                minItems: 2
+                maxItems: 2
+              centre:
+                type: array
+                description: centre pixel [x, y] of the object, cannot be beyond image size
+                items:
+                  type: number   
+                minItems: 2
+                maxItems: 2
+              xywh:
+                type: array
+                description: Bounding box formatted as [x, y, width, height] in pixels.
+                items:
+                  type: number
+                minItems: 4
+                maxItems: 4
+              confidence: { type: number, description: "0..1 model confidence" }
+            required: [label, description, reason, centre, xywh, confidence]
+      required: [object_list]
+    
+
+  - type: function
+    name: get_all_object_labels
+    parameters:
+      type: object
+      description: objects that adhere to the prompt
+      properties:
+        object_list:
+          type: array
+          items:
+            type: object
+            properties:
+              label:       { type: string, description: a concise unique label of object }
+              description: { type: string, description: a brief description about the object }
+              reason: {type: string, description: how it relates to the prompt }
+            required: [label,description,reason]
+      required: [object_list]
+
+
+  - type: function
+    name: camera_snapshot
+    description: take a snapshot from camera
+    parameters:
+      type: object
+      properties:
+        request:
+          type: string
+          description: the object requested to find in the camera image 
+        reason:
+          type: string
+          description: reason for taking the camera snapshot
+      required: [request,reason]
+
+  - type: function
+    name: hand_over
+    description: open gripper when ask to give to user
+    parameters:
+      type: object
+      properties:
+        description:
+          type: string
+          description: description of the object to get
+      required: [description]

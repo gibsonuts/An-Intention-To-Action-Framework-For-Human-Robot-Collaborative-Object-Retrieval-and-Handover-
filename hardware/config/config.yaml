@@ -1,0 +1,162 @@
+
+# === Camera configuration ===
+camera_drill:
+  model: realsense_d435
+  serial: "023422070739"           # optional
+  # image_mask_path: masks/camera_drill_mask.png
+  intrinsics:
+    width: 640
+    height: 480
+    fx: 613.7196044921875
+    fy: 613.9456787109375
+    cx: 309.51824951171875
+    cy: 231.26614379882812
+    # width: 1280
+    # height: 720
+    # fx: 644.92       # 613.7196 × 2
+    # fy: 644.92      # 613.9457 × 1.5
+    # cx: 637.52        # 309.5182 × 2
+    # cy: 350.68      # 231.2661 × 1.5
+    depth_scale: 0.001
+    distortion: [0.0, 0.0, 0.0, 0.0, 0.0]
+    fps: 30
+  align_depth_to_color: true
+  use_network_camera: true
+  network_camera_ip: 192.168.10.100
+  network_camera_port: 5552
+
+camera_gripper:
+  model: realsense_d435
+  serial: "102122070147"           # optional
+  # image_mask_path: masks/camera_gripper_mask.png
+  intrinsics:
+    width: 640
+    height: 480
+    fx: 613.7196044921875
+    fy: 613.9456787109375
+    cx: 309.51824951171875
+    cy: 231.26614379882812
+    depth_scale: 0.001
+    distortion: [0.0, 0.0, 0.0, 0.0, 0.0]
+    fps: 30
+  align_depth_to_color: true
+  use_network_camera: true
+  network_camera_ip: 192.168.10.100
+  network_camera_port: 5552
+
+camera_fixed:
+  model: realsense_d435
+  serial: "950122070492"           # optional
+  image_mask_path: ../../qbot/assets/fixed_camera_template_mask.png
+  intrinsics:
+    width: 640
+    height: 480
+    fx: 613.7196044921875
+    fy: 613.9456787109375
+    cx: 309.51824951171875
+    cy: 231.26614379882812
+    # width: 1280
+    # height: 720
+    # fx: 644.92       # 613.7196 × 2
+    # fy: 644.92      # 613.9457 × 1.5
+    # cx: 637.52        # 309.5182 × 2
+    # cy: 350.68      # 231.2661 × 1.5
+    depth_scale: 0.001
+    distortion: [0.0, 0.0, 0.0, 0.0, 0.0]
+    fps: 30
+  align_depth_to_color: true
+  use_network_camera: true
+  network_camera_ip: 192.168.10.100
+  network_camera_port: 5552
+
+gripper:
+  ip: 192.168.10.
+  use_network_gripper: true
+  network_gripper_ip: 192.168.10.100
+  network_gripper_port: 5554
+
+  max_width: 0.14
+  port: 63352
+  speed: 64
+  force: 125
+
+# === Robot ===
+robot:
+  ur_ip: 192.168.10.112
+  use_network_robot: true
+  network_robot_ip: 192.168.10.100
+  network_robot_port: 5553
+  watchdog_hz: 100.0
+  
+  j_speed: 0.6   # rad/s
+  j_accel: 1.0   # rad/s^2
+
+
+
+# === Frames (NO FLANGE; all are TCP-based) ===
+frames:
+  #Default TCP
+  # T_tcp_camera:
+  #   translation: [0.029, 0.046, 0.081]   # meters
+  #   rpy:         [-0.010, -0.013, 178.884]                 # degrees
+  #   degrees:     true
+
+  #Angle TCP
+  # T_tcp_camera:
+  #   translation: [0.059, -0.023, 0.071]   # meters
+  #   rpy:         [-0.007, -0.293, 91.242]                 # degrees
+  #   degrees:     true
+
+  # T_base_fixed_camera:
+  #   translation: [-0.359, 0.981, 0.621]   # meters
+  #   rpy:         [-90.444, 0.166, 136.533]                # degrees
+  #   degrees:     true
+
+  # T_tcp_gripper:
+  #   # translation: [0.000, 0.000, 0.200]
+  #   translation: [0.000, 0.000, 0.190]
+  #   rpy:     [0, 0, 0]
+  #   degrees:     true
+
+  #Quendabot
+  # T_tcp_camera:
+  #   translation: [0.033, 0.056, 0.140]   # meters
+  #   rpy:         [0.236, -0.250, 179.390]                 # degrees
+  #   degrees:     true
+
+  T_tcp_drill_camera:
+    # translation: [-0.108, -0.053, -0.105]   # meters
+    # translation: [-0.108, -0.04 , -0.105]   # meters
+    # translation: [-0.100, -0.048 , -0.105]   # meters
+    #rpy:         [23.121, 1.886, 92.979]               # degrees
+    # translation:  [-0.109, -0.038, -0.105]   # meters
+    # rpy:         [23.771, 1.373, 93.265]
+    translation:  [-0.110, -0.030, -0.077]
+    rpy:          [16.490, -0.294, 90.021]
+    degrees:     true
+
+  T_tcp_gripper_camera:
+    # translation: [0.033, 0.056, 0.140]   # meters
+    # translation: [0.033, 0.056, 0.135]   # meters
+    # rpy:         [0.236, -0.250, 179.390]                 # degrees
+    # degrees:     true
+    translation: [-0.025824, -0.063582, -0.052815]  # meters
+    rpy:         [-6.415, 3.344, 0.272]             # degrees
+    degrees:     true
+    
+    
+
+  T_base_fixed_camera:
+    # translation: [-0.656, -0.077, 0.576]   # meters
+    # rpy:         [-114.878, 2.594, -134.379]            # degrees
+    # translation: [-0.660, -0.052, 0.559]
+    # rpy:         [-129.480, 1.808, -135.643]            # degrees
+    translation: [-0.654, -0.068, 0.568]
+    rpy:         [-129.443, -1.323, -135.366]
+    degrees:     true
+
+  T_tcp_to_gripper:
+    # translation: [0.000, 0.000, 0.26]
+    translation: [0.000, 0.000, 0.26]
+    rpy:     [0, 0, 0]
+    degrees:     true

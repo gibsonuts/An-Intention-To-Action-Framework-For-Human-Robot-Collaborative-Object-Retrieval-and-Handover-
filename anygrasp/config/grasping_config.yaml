@@ -1,0 +1,45 @@
+# === Workspace, grasp, and motion params ===
+checkpoint_path: "anygrasp/checkpoint_detection.tar"
+tracker_checkpoint_path: "anygrasp/checkpoint_tracking.tar"
+
+workflow:
+
+  workspace_cam:
+    xmin: -0.50
+    xmax:  0.50
+    ymin: -0.50
+    ymax:  0.50
+    zmin:  -0.1
+    zmax:  1.0
+    # zmax:  1.0
+
+  approach:
+    offset_m: 0.16
+    # offset_m: 0.12
+    # offset_m: 0.08
+    descend_speed: 0.08
+    descend_accel: 0.1
+    # retreat_m: -0.08
+    retreat_m: -0.16
+
+  motion:
+    blend_pregrasp: 0.005
+    move_speed: 0.1
+    move_accel: 0.1
+    use_movels: true
+
+  grasp:
+    max_gripper_width: 0.14
+    gripper_height: 0.08
+    # gripper_height: 0.065
+    # gripper_height: 0.01
+    top_down_only: true
+    apply_object_mask: true
+    dense_grasp: true
+    collision_detection: true 
+    filter: none #oneeuro/kalman/none
+  scoring:
+    min_score: 0.1
+    top_k: 20
+
+# === Other settings ===

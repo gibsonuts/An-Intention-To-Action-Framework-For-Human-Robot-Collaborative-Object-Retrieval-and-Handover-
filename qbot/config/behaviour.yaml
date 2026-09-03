@@ -1,0 +1,90 @@
+control:
+  servo_gain: 250
+  servo_lookahead: 0.12
+  servo_hz: 100
+  rate_hz: 10
+
+  # smoothing + rate limit
+  lp_alpha_pos: 0.05
+  lp_alpha_dir: 0.05
+  max_step_m: 0.002  # 2 mm per tick ≈ 0.2 m/s @100Hz
+
+  # xy_bounds: [[-1.0, -0.47],[ -0.25, 0.25 ]]               # e.g., [[0.2, 0.6],[ -0.2, 0.2 ]]
+  xy_bounds: [[-0.4, 0.4],[ -1.0, -0.3 ]]               # Quendabot
+  z_bounds:  [0.1, 0.855]                # e.g., [0.05, 0.35]
+
+  slow_factor: 1.2        # >= 1.0; higher = slower by stretching dt (time per segment)
+  pos_step_scale: 0.67    # 0–1; smaller = smaller step toward target each tick
+  ang_step_scale: 0.35      # ~30% slower rotation than translation
+  max_ang_deg: 35.0         # optional: lower the per-tick cap during approach
+
+motion:
+  move_speed: 0.08
+  move_accel: 0.60
+
+point_at_person:
+  # tracking geometry
+  distance_m: 0.8
+  visibility_threshold: 0.5
+
+  target: "shoulders"           # face
+  hold_orientation: false  # we will actively aim at the face
+  hold_position: false     # true = rotate in place (no translation)
+  preserve_roll: true      # keep roll relative to start orientation
+
+  # keep orientation/height
+  keep_z: true
+
+  # orientation behavior
+  max_ang_deg_per_s: 45.0   # cap wrist speed
+  warm_start_s: 0.8         # blend-in time from start orientation
+  lost_target_hold_s: 0.3   # keep last aim when landmarks drop briefly
+  force_moveL: false
+  
+  #go back to idle when no target
+  auto_idle_on_loss: true
+  loss_timeout_s: 5.0
+  
+  pitch_offset_deg: 8.0   # +ve tilts the gripper up (about TCP Y-axis)
+  ready_location: [0.5984938144683838, -2.121873518029684, 2.542152229939596, -3.56070675472402, -0.5635317007647913, -0.03284770647157842]
+
+idle_lookaround:
+  yaw_amplitude_deg: 15.0
+  pitch_amplitude_deg: 5.0     # NEW: nod up/down
+  pitch_freq_mult: 1.0          # NEW: pitch speed relative to yaw (e.g., 1.3 for quicker nods)
+  period_s: 8.0
+
+  xy_radius_m: 0.05
+  z_amplitude_m: 0.02
+
+  #auto-switch to tracking when someone appears
+  auto_track_on_person: true
+  visibility_threshold: 0.5
+  presence_min_ticks: 8
+  presence_check_every: 2
+
+  look_from_ready_pose: true
+  ready_location: [0.5984938144683838, -2.121873518029684, 2.542152229939596, -3.56070675472402, -0.5635317007647913, -0.03284770647157842]
+
+handover:
+  hand: right
+  rotation_mode: none
+  standoff_m: 0.35        # was 0.10; closer so the human doesn’t need to reach as far
+  keep_z: false            # FOLLOW wrist height instead of locking to start height ✅
+  preserve_roll: true
+  visibility_threshold: 0.5
+
+  # force thresholds (easier to trigger; tune back up once it works reliably)
+  force_total_thresh_N: 6.0      # was 10.0
+  force_pull_z_thresh_N: 3.0     # was 6.0
+  grabbed_min_ticks: 4           # was 5 (≈80 ms at 100 Hz → a touch more robust)
+  max_wait_s: 5.0               # was 15.0 (more time for the human)
+  hold_time_s: 2.0
+  post_open_wait_s: 1.0          # was 3.0 (no need to hold open that long)
+
+  return_speed_mult: 8.0
+  return_ang_deg_per_s: 150
+  return_move_speed_mult: 7.0
+  return_near_m: 0.05
+  hand_only_allowed: true
+  ready_location: [1.9582594633102417, -1.7493187389769496, 2.2809622923480433, -2.6908699474730433, -1.774440113698141, 0.34861132502555847]

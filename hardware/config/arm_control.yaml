@@ -1,0 +1,70 @@
+robot:
+  host: "192.168.10.112"
+
+  #default move speeds
+  j_speed: 0.4   # rad/s
+  j_accel: 1.0   # rad/s^2
+  l_speed: 0.2
+  l_accel: 2.0
+
+tool:
+  # # TCP GRIPPER ATTACHEMENT
+  # tcp_gripper:
+  #   tcp_pose: [0,0,0,0,0,0]  # tool offset [x,y,z,rx,ry,rz]
+
+  # # TCP DRILL ATTACHEMENT
+  # tcp_drill:
+  #   tcp_pose: [0,0.15,0.12,-1.6,0,0]  # tool offset [x,y,z,rx,ry,rz]
+
+  # TCP GRIPPER DRILL ATTACHEMENT
+  tcp_gripper:
+    # tcp_pose: [0,0,0,0,0,0]  # tool offset [x,y,z,rx,ry,rz]
+    tcp_pose: [0.0,0.193,0.146,-1.0472,0,0]  # tool offset [x,y,z,rx,ry,rz]
+
+  # TCP DRILL ATTACHEMENT
+  tcp_drill:
+    tcp_pose: [0.150,-0.100,0.091,-0.5463,1.5009,-0.5463]  # tool offset [x,y,z,rx,ry,rz]
+
+calibration:
+  bias_seconds: 0.7
+  bias_dt: 0.005
+  estimate:
+    samples: 30
+    settle_s: 0.2
+    avg_s: 0.15
+    assume_rz_m: 0.0
+
+motion:
+  moveI:
+    loop_hz: 100.0
+    kp_lin: 1.2
+    kp_rot: 2.0
+    max_lin_speed: 0.12
+    max_rot_speed: 0.7
+    force_threshold: 10.0
+    k_imp: 0.0035
+    imp_max: 0.05
+    ft_alpha: 0.25
+    settle_tol_lin: 0.002
+    settle_tol_rot: 0.01
+    settle_time: 0.5
+    max_time: 30.0
+    remeasure_bias: true
+    downweight_z: 1.0
+
+  holdI:
+    loop_hz: 100.0
+    kp_lin: 0.6            # was 2.0
+    kp_rot: 1.2            # was 3.0
+    max_lin_speed: 0.08
+    max_rot_speed: 0.6
+    force_threshold: 3.0   # was 12.0
+    k_imp: 0.020           # was 0.05 (less jumpy; still very compliant)
+    imp_max: 0.1s0          # was 0.08 (can drift more when you push)
+    ft_alpha: 0.35
+    remeasure_bias: false
+    downweight_z: 0.6
+
+motion:
+  flip_ft_sign: true          # try true first; set false if behavior reverses
+  software_gravity_comp: false  # let the UR controller handle gravity

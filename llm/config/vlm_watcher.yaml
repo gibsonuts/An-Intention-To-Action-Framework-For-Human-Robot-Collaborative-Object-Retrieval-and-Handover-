@@ -1,0 +1,158 @@
+
+# system_prompt: |
+#   You are a robot control planner looking at a camera image.
+
+#   The robot has a fixed list of objects it can fetch, called KNOWN_OBJECTS.
+#   You will be given:
+#     - The current camera frame (image).
+#     - The list of KNOWN_OBJECTS in text form.
+
+#   Your job is:
+#     1) Look at the person in the image and infer what they are likely doing
+#        and what they might need help with (e.g., thirsty, working on laptop,
+#        looking for phone, cold and reaching for blanket, etc.).
+#     2) Decide whether exactly ONE object from KNOWN_OBJECTS would be helpful.
+#        - If yes, call the `suggest_object` tool with:
+#          - object_name: the best matching object from KNOWN_OBJECTS
+#          - reason: short explanation of why this object helps in this moment
+#          - urgency_percent: number from 0 to 100 (0 = not urgent at all,
+#            100 = extremely urgent / immediate need).
+#        - If no object would clearly help (or you are unsure),
+#          YOU MUST:
+#            - Not call any tools.
+#            - Return an empty assistant message content ("").
+#     3) You must ONLY choose an object that appears in KNOWN_OBJECTS exactly
+#        as given (case-insensitive match is fine, but do not invent new names
+#        or variants not in the list).
+
+#   IMPORTANT BEHAVIOR RULES:
+#   - Never speak to the user in natural language.
+#   - You either:
+#       - Call exactly one tool (`suggest_object`), OR
+#       - Stay silent (empty content) with no tool calls.
+#   - You MUST NOT call more than one tool per frame.
+#   - Make sure there is a person present in the frame or return 0 urgency
+#   - Treat each image independently; you have NO MEMORY of past frames.
+#     Any reasoning must come only from what you see in the current image.
+
+#   URGENCY GUIDELINES:
+#   - 0–20: Very low urgency (object might be mildly useful, but not needed).
+#   - 20–50: Low to moderate urgency (would help, but not critical).
+#   - 50–80: High urgency (user seems like they actively need it soon).
+#   - 80–100: Very high urgency (user appears to need help immediately).
+
+model: Qwen3-VL-30B-A3B-Instruct-Q4_K_M.gguf
+
+system_prompt: |
+  You are a camera watching a scene in a construction site. Use `object_suggester` to determine which object or objects are needed.
+# Instructions: 
+# 1. If noone in sceen call tool check persons
+# 2. if somebody in scene check what person is holding based on what is availability
+# 3. talk like you are directly talking the person infront of the camera.
+
+
+tools:
+  # - type: function
+  #   function:
+  #     name: suggest_object
+  #     description: Check urgancy of object for human if present 
+  #     parameters:
+  #       type: object
+  #       properties:
+  #         object_name:
+  #           type: string
+  #           description: >
+  #             Name of the object to fetch. MUST exactly match one of the values
+  #             in KNOWN_OBJECTS (case-insensitive).
+  #         reason:
+  #           type: string
+  #           description: >
+  #             Very Short explanation, in natural language, describe what the person is doing an if they need a object
+  #         people_detected:
+  #           type: number
+  #           description: >
+  #             Number of people in the , must be human and not a machine
+  #         urgency_percent:
+  #           type: number
+  #           description: >
+  #             A number 0–100 describing how urgently the person seems to need this object.
+  #             0 = not urgent at all, 100 = extremely urgent.
+  #       required: [people_detected,object_name, reason, urgency_percent]
+  # - type: function
+  #   function:
+  #     name: person_detector
+  #     description: check how many person are in image
+  #     parameters:
+  #       type: object
+  #       properties:
+  #         person_detection:
+  #           type: number
+  #           description: >
+  #             Number of people in the scene
+       
+  #       required: [person_detection]
+
+  - type: function
+    function:
+      name: object_suggester
+      description: based on what the person is doing suggest one or more objects
+      parameters:
+
+        type: object
+        properties:
+          person_detection:
+            type: number
+            description: >
+              Number of people in the scene
+        
+          person_holding:
+              type: string
+              description: >
+                if person is detected,what is person is holding and doing, or return empty
+            # type: object
+            # properties:
+            #   action:
+            #     type: string
+            #     description: >
+            #       what is person doing
+            #   object:
+            #     type: string
+            #     description: >
+            #       what is person holding
+            #   object_state:
+            #     type: string
+            #     description: >
+            #       detail description of the object state
+          object_suggestion:
+            type: array
+            items:
+              type: string
+            description: >
+              If theres a person and is holding something, Given what object is being held, suggest one or more objects from available objects.
+              Return an empty list if no object is needed.
+          reason:
+            type: string
+            description: >
+              very short answer to why object was selected
+        required: [person_detection,person_holding, object_suggestion, reason]
+
+# List of objects the robot can fetch.
+# You can extend or change this list as needed.
+known_objects:
+  - "tape"
+  - "screw-driver"
+  - "battery"
+  - "box of screw"
+  - "nothing"
+
+extra_infomation: |
+  Important Rules to Follow:
+  Only suggest thing that can be used or replaced with this tool the person is holding!
+  If person is not holding any tools dont suggest anything.
+
+  
+# 1. if person holding 'power drill', suggest ‘box of screw’
+# 2. if person holding 'tape measure', suggest ‘tape’
+# 3. if person holding 'screw', suggest ‘screw-driver’
+# 4. if person holding 'battery', suggest ‘battery’
+# 5. if you see none of these things suggest ‘nothing’

@@ -1,0 +1,13 @@
+hey <name> 
+im listening 
+whats up 
+hi <name>
+Ready for your command!
+Im at your service.
+Listening now.
+Yes, how may I help?
+What do you need?
+Here and ready!
+Awaiting instructions.
+At your service
+What's on the agenda today
